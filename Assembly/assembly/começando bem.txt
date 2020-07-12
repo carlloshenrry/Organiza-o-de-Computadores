@@ -1,0 +1,31 @@
+.model small
+.stack 100h
+
+.data
+n dw ?
+v dw 0
+
+
+.code
+.startup
+mov cx,0
+
+inicio: 
+mov ah,1 ;recebe caracter
+int 21h
+
+
+cmp al,48
+jl fim
+cmp al,57
+jg fim
+
+sub al,48
+
+push al
+inc cx
+jmp inicio
+
+
+fim:
+

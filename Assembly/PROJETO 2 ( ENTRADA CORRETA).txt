@@ -1,0 +1,198 @@
+TITLE Projeto 2
+
+.MODEL SMALL
+.STACK 100H
+
+.DATA
+VET DW 10000 DUP (?)
+T DW ?
+DIGTNUM DB "Digite um numero:$" 
+Opcion DB "Escolha uma Opção:$" 
+
+.CODE
+.STARTUP
+;----------------------------------------------------------------MENU-----------------------------------------------------------------------
+LEA DX, Opcion
+MOV AH, 09H
+INT 21H 
+
+
+
+
+
+
+
+
+
+
+
+
+;---------------------------------------------------------ENTRADA DE VALOR----------------------------------------------------------
+PROC receptorDEC
+PUSH AX
+PUSH BX
+PUSH CX
+PUSH DX
+
+
+ENTRADA10:
+
+MOV BX,0
+MOV CX,0;0 CX PARA VERIFICAR SINAL (FLAG)
+
+
+mov ah,1 ;recebe caracter
+int 21h
+
+cmp al,'-';verifica se eh sinal
+je menos;jump para receber numero _
+
+cmp al,'+';verifica sinal
+je mais;jump para receber numero +
+
+jmp num;se nao for as opcoes anteriores recebe numero
+
+menos: MOV CX,1;SE O NUMERO FOR NEGATIVO CX RECEBE 1
+mais:
+int 21h;RECEBER VALOR, AH JA TEM O VALOR 1 ENTAO A FUNÇÃO JA FUNCIONA
+
+num:
+sub al,48;TRANFORMA EM NUMERO VERDADEIRO
+MOV AH, 0;ZERA AH PARA DEIXAR AX APENAS COM NUMERO VERDADEIRO
+PUSH AX;ACUMULA VALOR VDD NA PILHA
+MOV AX,10;AX RECEBE 10 AGORA
+MUL BX;O VALOR DE BX MULTIPLICA POR AX QUE EH 10
+POP BX;BX RECEBE O VALOR DA PILHA
+ADD BX,AX;VALOR DA PILHA VEZES 10
+
+secnumber:
+MOV AH,1
+INT 21H ;RECEBER OUTRO NUMERO
+CMP AL,13;VERIFICA SE AL EH ENTER
+JE FORA;SE IGUAL ELE SAI
+CMP AL,48;verifica se numero 
+JL numerror
+CMP AL,57;verifica se numero
+JG numerror;jmp para avisar erro e pedir outra entrada10
+JMP num
+
+numerror:
+LEA DX, avisodeerro
+MOV AH, 9H
+INT 21H;avisa que nao eh numero
+jmp secnumber
+
+FORA:
+MOV AX,BX;O VALOR VERDADEIRO VAI PARA AX
+CMP CX,0;VERIFICA FALOR DE CX PARA SABER SE O NUMERO EH POSITIVO OU NAO 
+JE SAIENTRADA10
+NEG AX;TRANFORMA O VALOR VERDADEIRO EM NEGATIVO
+
+SAIENTRADA10:
+POP DX
+POP CX
+POP BX
+POP AX
+ret
+receptorDEC endp
+;---------------------------------------------------------------------------------------------------------------------------
+;----------------------------------------------------------------------VETOR CRESCENTE--------------------------------------
+PROC VETORCRESCENT
+PUSH AX
+PUSH BX
+PUSH CX
+PUSH DX
+
+MOV T,AX
+MOV CX,T
+
+XOR BX,BX
+XOR AX,AX 
+L1:
+
+INC BX
+ADD AX,2
+
+MOV[VET+AX],BX
+LOOP L1
+
+
+
+VETORCRESCENT endp 
+
+;---------------------------------------------------------------------VETOR DECRESCENTE-------------------------------------- 
+PROC VETORDECRESCENT
+PUSH AX
+PUSH BX
+PUSH CX
+PUSH DX
+
+MOV T,AX
+MOV CX,T 
+XOR AX,AX
+L2:
+MOV [VET+AX],CX
+ADD AX,2
+LOOP L2
+
+VETORDECRESCENT endp 
+;--------------------------------------------------------------------VETOR RANDÔMICO--------------------------------------
+
+PROC VETORRAND
+PUSH AX
+PUSH BX
+PUSH CX
+PUSH DX
+
+
+CALL receptorDEC
+
+MOV T,AX
+MOV CX,T
+
+
+LEA DX, DIGTNUM
+MOV AH, 09H
+INT 21H 
+
+MOV AH,1
+INT 21H
+MOV BX,AX
+
+
+
+L3:
+CALL ALEATORIO
+MOV [VET+CX],BX
+
+SUB CX, 2
+ 
+CMP CX, 0
+JNZ L3
+
+VETORRAND endp 
+;-----------------------------------------------------------------FUNÇÃO PARA RANDOMICO-------------------------------
+ALEATORIO PROC
+
+ADD BX,100
+MOV AX,BX
+MUL 5
+XOR DX,DX
+IDIV 100
+MOV BX,DX
+
+RET
+ALEATORIO ENDP
+;---------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+

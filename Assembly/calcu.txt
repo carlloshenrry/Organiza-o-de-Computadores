@@ -1,0 +1,2100 @@
+	TITLE PGM4_1: CALCULADORA
+	.MODEL SMALL
+	.STACK 100H
+	.DATA
+		
+		;==============================================================MENSAGENS========================================================================
+		
+		MSGCRIADORES DB 0Ah,0Dh, 'CALCULADORA CRIADA POR CESAR, AUGUSTO PINARDI E FABIO LUIS DUMONT', 0Ah,0Dh,'$'
+		MSGENTRADA DB 0Ah,0Dh, 'Bem vindo a calculadora, aqui voce podera fazer varias operacoes com as bases decimal, binario, hexadecimal e octal.', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGOPCAO DB 0Ah,0Dh, 'Selecione uma base. Apos digitar  numero, aperte a tecla "ENTER".', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGDEC DB 0Ah,0Dh, '1 - DECIMAL', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGBIN DB 0Ah,0Dh, '2 - BINARIO', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGHEX DB 0Ah,0Dh, '3 - HEXADECIMAL', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGOCT DB 0Ah,0Dh, '4 - OCTAL', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSG DB 0Ah,0Dh, 'SELECIONE UMA OPCAO', 0Ah,0Dh,'$' ;'0Ah,0Dh,' pula linha
+		MSGS DB '1) SOMA', 0Ah,0Dh,'$'
+		MSGSU DB '2) SUBTRACAO', 0Ah,0Dh,'$'
+		MSGM DB '3) MULTIPLICACAO', 0Ah,0Dh,'$'
+		MSGD DB '4) DIVISAO', 0Ah,0Dh,'$'
+		MSGDD DB '5) MULTIPLICACAO POR 2', 0Ah,0Dh,'$'
+		MSGMM  DB '6) DIVISAO POR 2', 0Ah,0Dh,'$'
+		MSGA  DB '7) AND', 0Ah,0Dh,'$'
+		MSGO  DB '8) OR', 0Ah,0Dh,'$'
+		MSGX DB '9) XOR', 0Ah,0Dh,'$'
+		MSGN DB '10) NOT', 0Ah,0Dh,'$'
+		MSGF DB '0) SAIR', 0Ah,0Dh, '$'
+		MSGSOMA DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA SOMAR', 0Ah,0Dh,'$'
+		MSGSUB DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA SUBTRAIR', 0Ah,0Dh,'$'
+		MSGMUL DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA MULTIPLICAR', 0Ah,0Dh,'$'
+		MSGDIV DB 0Ah,0Dh,'ESCOLHA 1 NUMERO PARA SER O DIVIDENDO', 0Ah,0Dh,'$' 
+		MSGMM2 DB 0Ah,0Dh,'ESCOLHA A QUANTIDADE DE VEZES QUE O NUMERO SERA MULTIPLICADO', 0Ah,0Dh,'$'
+		MSGM2 DB 0Ah,0Dh,'ESCOLHA 0 NUMERO PARA SER MULTIPLICADO POR 2', 0Ah,0Dh,'$'
+		MSGDD2 DB 0Ah,0Dh,'ESCOLHA A QUANTIDADE DE VEZES QUE O NUMERO SERA DIVIDIDO', 0Ah,0Dh,'$'
+		MSGD2 DB 0Ah,0Dh,'ESCOLHA 0 NUMERO PARA SER DIVIDIDO POR 2', 0Ah,0Dh,'$'
+		MSGAND DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA FAZER A OPERACAO LOGICA AND', 0Ah,0Dh,'$'
+		MSGOR DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA FAZER A OPERACAO LOGICA OR', 0Ah,0Dh,'$'
+		MSGXOR DB 0Ah,0Dh,'ESCOLHA 2 NUMEROS PARA FAZER A OPERACAO LOGICA XOR', 0Ah,0Dh,'$'
+		MSGNOT DB 0Ah,0Dh,'ESCOLHA O NUMERO PARA FAZER A OPERACAO LOGICA NOT', 0Ah,0Dh,'$'
+		MSGAND1 DB 'AND', 0Ah,0Dh,'$'
+		MSGOR1 DB 'OR', 0Ah,0Dh,'$'
+		MSGXOR1 DB 'XOR', 0Ah,0Dh,'$'
+		MSGNOT1 DB 'NOT', 0Ah,0Dh,'$'	
+		MSGEXPLICDEC DB 0Ah,0Dh,'EM DECIMAL OS VALORES PODEM IR DE -32768 a +32767. CASO DIGITE UM NUMERO DO FORA DO INTERVALO HAVERA OVERFLOW E O RESUTADO APARECERA COMO ZERO', 0Ah, 0Dh, '$'
+		MSGEXPLICBIN DB 0Ah,0Dh,'EM BINARIO SAO PERMITIDOS APENAS 2 ENTRADAS, "0" E "1"', 0Ah, 0Dh, '$'
+		MSGEXPLICHEX DB 0Ah,0Dh,'EM HEXADECIMAL SAO PERMITIDOS ENTRADAS DE NUMEROS DE "0" A "9" E LETRAS DE "A" "F"', 0Ah, 0Dh, '$'
+		MSGEXPLICOCT DB 0Ah,0Dh,'EM OCTAL SAO PERMITIDAS ENTRADAS DE "0" A "7"', 0Ah, 0Dh, '$'
+		MSGSAIDA DB 0AH, 0DH,'GOSTARIA DE ESCOLHER OUTRA BASE? 1)"SIM" / 2)"NAO"', 0AH, 0DH, '$';NAO SAI DE VEZ, SIM VOLTA (APERTA 0 PARA SAIR)
+		MSGRESULTADO DB 0AH, 0DH,'RESULTADO:', 0AH, 0DH, '$'
+		
+		;==================================================DECLARACAO DE POSICAO DE MEMORIA=============================================================
+		
+		NUM DW ?
+		NUM2 DW ?
+		NUM5 DB ?
+		.CODE
+		CALC PROC
+		
+		;==================================================EXIBICAO DO MENU=============================================================================
+			MOV AX,@DATA ;coloca o numero do segmento de dados em AX
+			MOV DS,AX    ;pois DS nao pode receber @DATA diretamente
+			
+		;
+			LEA DX,MSGCRIADORES
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+		MENU:
+			
+			LEA DX,MSGENTRADA
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			LEA DX,MSGOPCAO
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			LEA DX,MSGDEC
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			LEA DX,MSGBIN
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			LEA DX,MSGHEX
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			LEA DX,MSGOCT
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			;
+			CALL ENTDEC
+			;
+			CMP AX, 1D
+			JZ MENUDEC
+			;
+			CMP AX, 2D
+			JZ JMPMENUBIN
+			;
+			CMP AX, 3D
+			JZ JMPMENUHEXA
+			;
+			CMP AX, 4D
+			JZ JMPMENUOCT
+			
+		;=============================================JUMPS PARA MENUS=============================================================================
+		
+		JMPMENUDEC:
+			JMP MENUDEC
+		
+		JMPMENUBIN:
+			JMP MENUBIN
+			
+		JMPMENUHEXA:
+			JMP MENUHEXA
+			
+		JMPMENUOCT:
+			JMP MENUOCT
+			
+		;=============================================MENU DECIMAL=================================================================================
+	
+		MENUDEC:
+			LEA DX, MSGEXPLICDEC
+			MOV AH, 9H
+			INT 21H
+			MOV AX,@DATA ;coloca o numero do segmento de dados em AX
+			MOV DS,AX    ;pois DS nao pode receber @DATA diretamente
+		;SELECIONE UMA OPCAO			
+			LEA DX, MSG
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+		;SOMA
+			LEA DX,MSGS
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SUBTRACAO
+			LEA DX,MSGSU
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO
+			LEA DX,MSGM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO
+			LEA DX,MSGD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO POR 2
+			LEA DX,MSGDD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO POR 2
+			LEA DX,MSGMM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;AND
+			LEA DX,MSGA
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;OR
+			LEA DX,MSGO
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;XOR
+			LEA DX,MSGX
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;NOT
+			LEA DX,MSGN
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SAIR
+			LEA DX,MSGF
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;RECEBER UM VALOR DO USUARIO
+		
+		;=============================================JUMPS PARA PARA AS OPERACOES==================================================================
+			
+		CALL ENTDEC
+		;JMP PARA SOMA
+			CMP AX, 1D 	;compara se o caracter eh igual a 1
+			JZ SOMADECJMP    	;se for igual pula para a linha chamada soma
+		;JUMP PARA SUB
+			CMP AX, 2D	;compara se o caracter eh igual a 2
+			JZ SUBTRACAODECJMP;se for igual pula para a linha chamada subtracao
+		;JUMP PARA MULT
+			CMP AX, 3D	;compara se o caracter eh igual a 3
+			JZ MULTIPLICACAODECJMP;se for igual pula para a linha chamada multiplicacao
+		;JUMP PARA DIV
+			CMP AX, 4D	;compara se o caracter eh igual a 4
+			JZ DIVISAODECJMP	;se for igual pula para a linha chamada divisao
+		;JUMP PARA MULT3
+			CMP AX, 5D	;compara se o caracter eh igual a 5
+			JZ MULTIPLICACAO2DECJMP;se for igual pula para a linha chamada multiplicacao3
+		;JUMP PARA DIVISAO3
+			CMP AX, 6D;compara se o caracter eh igual a 6
+			JZ DIVISAO2DECJMP;se for igual pula para a linha chamada divisao3
+		;JUMP PARA AND1
+			CMP AX, 7D;compara se o caracter eh igual a 7
+			JZ  ANDDECJMP;se for igual pula para a linha chamada AND1
+		;JUMP PARA OR1
+			CMP AX, 8D;compara se o caracter eh igual a 8
+			JZ ORDECJMP;se for igual pula para a linha chamada OR1
+		;JUMP PARA XOR1
+			CMP AX, 9D;compara se o caracter eh igual a 9
+			JZ XORDECJMP;se for igual pula para a linha chamada XOR1
+		;JUMP PARA NOT1
+			CMP AX, 10D;compara se o caracter eh igual a 10
+			JZ NOTDECJMP;se for igual pula para a linha chamada NOT1
+		;JUMP PARA SAIR
+			CMP AX, 0D	;compara se o caracter eh igual a 0(48 na tabela ASCII)
+			JZ SAIRDECJMP	;se for igual pula para a linha chamada sair
+		;JXXX TEM EXCECAO DE ACORDO COM O NUMERO DE LINHAS
+		;PULAR PARA A INSTRUCAO SOMADEC
+		SOMADECJMP:
+			JMP SOMADEC
+		;PULAR PARA A INSTRUCAO SUBTRACAODEC
+		SUBTRACAODECJMP:
+			JMP SUBTRACAODEC
+		;PULAR PARA A INSTRUCAO DIVISAODEC
+		DIVISAODECJMP:
+			JMP DIVISAODEC
+		;PULAR PARA A INSTRUCAO MULTIPLICACAODEC
+		MULTIPLICACAODECJMP:
+			JMP MULTIPLICACAODEC
+		;PULAR PARA A INSTRUCAO MULTIPLICACAO2DEC
+		MULTIPLICACAO2DECJMP:
+			JMP MULTIPLICACAO2DEC
+		;PULAR PARA A INSTRUCAO DIVISAO2DEC
+		DIVISAO2DECJMP:
+			JMP DIVISAO2DEC
+		;PULAR PARA A INSTRUCAO ANDDEC
+		ANDDECJMP:
+			JMP ANDDEC
+		;PULAR PARA A INSTRUCAO ORDEC
+		ORDECJMP:
+			JMP ORDEC
+		;PULAR PARA A INSTRUCAO XORDEC
+		XORDECJMP:
+			JMP XORDEC
+		;PULAR PARA A INSTRUCAO NOTDEC
+		NOTDECJMP:
+			JMP NOTDEC
+		;PULAR PARA A INSTRUCAO SAIRDEC
+		SAIRDECJMP:
+			JMP JMPSAIDADEC
+		
+		;=============================================INICIO DAS OPERACOES PARA DECIMAIS==================================================================
+		
+		;=============================================OPERACAO DECIMAL DE SOMA============================================================================
+		
+		SOMADEC:
+			;exibindo a mensagem de MSGSOMA
+			LEA DX, MSGSOMA
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo + na tela
+			MOV AH,2
+			MOV DL,'+'
+			INT 21H ;(int21h sempre busca DL
+			
+			;pegando o segundo numero
+			CALL ENTDEC
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;fazendo a soma e subtraindo 48 para exibicao em decimal
+			MOV AX, NUM
+			MOV BX, NUM2
+			ADD AX,BX	
+			;exibindo na tela o resultado
+			CALL SAIDEC 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL DE SUBTRACAO=======================================================================
+			
+		SUBTRACAODEC:
+			;exibindo a mensagem de MSGSUB
+			LEA DX, MSGSUB
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo - na tela
+			MOV AH,2
+			MOV DL,'-'
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTDEC 
+			MOV NUM2, AX
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;fazendo a subtracao e somando 48 para resultado em decimal
+			MOV AX, NUM
+			MOV BX, NUM2
+			SUB AX, BX
+			;exibindo na tela o resultado
+			CALL SAIDEC	
+			; 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL DE MULTIPLICACAO===================================================================
+		
+		MULTIPLICACAODEC:
+			LEA DX, MSGMUL
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM, AX
+			;
+			MOV AH,2
+			MOV DL,'*'
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM2, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+
+			MOV AX, NUM
+			MOV BX, NUM2
+			IMUL BX ;SEMPRE PEGA EM AL
+			;
+			CALL SAIDEC
+			JMP MENUDEC
+			
+		;=============================================OPERACAO DECIMAL DE DIVISAO=========================================================================
+		
+		DIVISAODEC:
+			LEA DX, MSGDIV
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC 
+			MOV NUM, AX
+			;
+			MOV AH,2
+			MOV DL,'/'
+			INT 21H
+			;
+			CALL ENTDEC 
+			MOV NUM2, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR DX, DX 
+			IDIV BX
+			;
+			CALL SAIDEC
+			JMP MENUDEC
+			
+		;=============================================OPERACAO DECIMAL DE MULTIPLICACAO POR 2=============================================================	
+			
+		MULTIPLICACAO2DEC:
+			LEA DX, MSGMM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC 
+			MOV NUM5, AL
+			MOV CL, NUM5
+			;
+			LEA DX, MSGM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC 
+			SAL AX, CL
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			SUB AX, 2304D
+			CALL SAIDEC 
+			; 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL DE DIVISAO POR 2===================================================================
+		
+		DIVISAO2DEC:	
+			LEA DX, MSGDD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC 
+			MOV NUM5, AL
+			MOV CL, NUM5
+			;
+			LEA DX, MSGD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC 
+			SAR AX, CL
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			SUB AX, 2304D
+			CALL SAIDEC 
+			JMP MENUDEC
+			
+		;=============================================OPERACAO DECIMAL LOGICA AND=========================================================================
+		
+		ANDDEC:
+			LEA DX, MSGAND
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGAND1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTDEC
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			AND AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIDEC 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL LOGICA OR==========================================================================
+		
+		ORDEC:
+			LEA DX, MSGOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTDEC
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			OR AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIDEC 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL LOGICA XOR=========================================================================
+		
+		XORDEC:
+			LEA DX, MSGXOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGXOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTDEC
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIDEC 
+			JMP MENUDEC
+		
+		;=============================================OPERACAO DECIMAL LOGICA NOT=========================================================================
+		
+		NOTDEC:
+			LEA DX, MSGNOT
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTDEC
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGNOT1
+			MOV AH, 9h
+			INT 21H		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			NOT AX	
+			;exibindo na tela o resultado
+			CALL SAIDEC 
+			JMP MENUDEC
+		;
+		JMPSAIDADEC:
+			LEA DX, MSGSAIDA
+			MOV AH, 9H
+			INT 21H
+			CALL ENTDEC
+			CMP AX, 1D
+			JZ MENUJMP
+			CMP AX, 2D
+			JZ SAIRDEC
+		MENUJMP:
+			JMP MENU
+		
+		;RETORNO AO DOS
+		SAIRDEC:
+			MOV AH,4CH ;funcao para saida
+			INT 21H ;saindo
+	
+		;=============================================EXIBICAO MENU BINARIO===============================================================================
+		
+		MENUBIN:
+			LEA DX,MSGEXPLICBIN
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+			MOV AX,@DATA ;coloca o numero do segmento de dados em AX
+			MOV DS,AX    ;pois DS nao pode receber @DATA diretamente
+		
+		;SELECIONE UMA OPCAO
+			LEA DX,MSG
+			MOV AH,9h	;funcao para exibir caracter
+			INT 21H		;exibir
+		;SOMA
+			LEA DX,MSGS
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SUBTRACAO
+			LEA DX,MSGSU
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO
+			LEA DX,MSGM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO
+			LEA DX,MSGD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO POR 2
+			LEA DX,MSGDD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO POR 2
+			LEA DX,MSGMM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;AND
+			LEA DX,MSGA
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;OR
+			LEA DX,MSGO
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;XOR
+			LEA DX,MSGX
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;NOT
+			LEA DX,MSGN
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SAIR
+			LEA DX,MSGF
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		
+		;=============================================JUMPS PARA AS OPERACOES (BINARIO)===================================================================
+		
+		;RECEBER UM VALOR DO USUARIO			
+		CALL ENTDEC
+		;Para ir do menu ate uma linha especifica, vc precisa de um if com um jump
+		;JUMP PARA SOMA
+			CMP AX, 1D 	;compara se o caracter eh igual a 1
+			JZ SOMA    	;se for igual pula para a linha chamada soma
+		;JUMP PARA SUB
+			CMP AX, 2D	;compara se o caracter eh igual a 2
+			JZ SUBTRACAO;se for igual pula para a linha chamada subtracao
+		;JUMP PARA MULT
+			CMP AX, 3D	;compara se o caracter eh igual a 3
+			JZ MULTIPLICACAO;se for igual pula para a linha chamada multiplicacao
+		;JUMP PARA DIV
+			CMP AX, 4D	;compara se o caracter eh igual a 4
+			JZ DIVISAO	;se for igual pula para a linha chamada divisao
+		;JUMP PARA MULT3
+			CMP AX, 5D	;compara se o caracter eh igual a 5
+			JZ MULTIPLICACAO3;se for igual pula para a linha chamada multiplicacao3
+		;JUMP PARA DIVISAO3
+			CMP AX, 6D;compara se o caracter eh igual a 6
+			JZ DIVISAO3;se for igual pula para a linha chamada divisao3
+		;JUMP PARA AND1
+			CMP AX, 7D;compara se o caracter eh igual a 7
+			JZ  AND1;se for igual pula para a linha chamada AND1
+		;JUMP PARA OR1
+			CMP AX, 8D;compara se o caracter eh igual a 8
+			JZ OR1;se for igual pula para a linha chamada OR1
+		;JUMP PARA XOR1
+			CMP AX, 9D;compara se o caracter eh igual a 9
+			JZ XOR1;se for igual pula para a linha chamada XOR1
+		;JUMP PARA NOT1
+			CMP AX, 10D;compara se o caracter eh igual a 10
+			JZ NOT1;se for igual pula para a linha chamada NOT1
+		;JUMP PARA SAIR
+			CMP AX, 0D	;compara se o caracter eh igual a 0(48 na tabela ASCII)
+			JZ SAIRB	;se for igual pula para a linha chamada sair
+		;JXXX TEM EXCECAO DE ACORDO COM O NUMERO DE LINHAS
+		;PULAR PARA A INSTRUCAO SOMA
+		SOMA:
+			JMP SOMA2
+		;PULAR PARA A INSTRUCAO SUBTRAÇÃO
+		SUBTRACAO:
+			JMP SUBTRACAO2
+		;PULAR PARA A INSTRUCAO DIVISAO
+		DIVISAO:
+			JMP DIVISAO2
+		;PULAR PARA A INSTRUCAO MULTIPLICACAO
+		MULTIPLICACAO:
+			JMP MULTIPLICACAO2
+		;PULAR PARA A INSTRUCAO MULTIPLICACAO3
+		MULTIPLICACAO3:
+			JMP MULTIPLICACAOM2
+		;PULAR PARA A INSTRUCAO DIVISAO3
+		DIVISAO3:
+			JMP DIVISAOD2
+		;
+		;PULAR PARA A INSTRUCAO AND2
+		AND1:
+			JMP AND2
+		;
+		;PULAR PARA A INSTRUCAO OR2
+		OR1:
+			JMP OR2
+		;
+		;PULAR PARA A INSTRUCAO XOR2
+		XOR1:
+			JMP XOR2
+		;
+		;PULAR PARA A INSTRUCAO NOT2
+		NOT1:
+			JMP NOT2
+		;PULAR PARA A INSTRUCAO SAIR1
+		SAIRB:
+			JMP JSAIDABIN
+		
+		;=============================================SOMA BINARIOS=======================================================================================
+		
+		SOMA2:
+			;exibindo a mensagem de MSGSOMA
+			LEA DX, MSGSOMA
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo + na tela
+			MOV AH,2
+			MOV DL,'+'
+			INT 21H ;(int21h sempre busca DL)
+			;pegando o segundo numero
+			CALL ENTBIN
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;fazendo a soma e subtraindo 48 para exibicao em decimal
+			MOV AX, NUM
+			MOV BX, NUM2
+			ADD BX,AX	
+			;exibindo na tela o resultado
+			CALL SAIBIN 
+			JMP MENUBIN
+		
+		;=============================================SUBTRACAO BINARIOS==================================================================================
+		
+		SUBTRACAO2:
+			;exibindo a mensagem de MSGSUB
+			LEA DX, MSGSUB
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo - na tela
+			MOV AH,2
+			MOV DL,'-'
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTBIN
+			MOV NUM2, BX
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;fazendo a subtracao e somando 48 para resultado em decimal
+			MOV AX, NUM2
+			MOV BX, NUM
+			SUB BX, AX
+			;exibindo na tela o resultado
+			CALL SAIBIN
+			JMP MENUBIN
+		
+		;=============================================MULTIPLICACAO BINARIOS==============================================================================
+		
+		MULTIPLICACAO2:
+			LEA DX, MSGMUL
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV NUM, BX
+			;
+			MOV AH,2
+			MOV DL,'*'
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV NUM2, BX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+
+			MOV AX, NUM
+			MOV BX, NUM2
+			MUL BX ;SEMPRE PEGA EM AL
+			;
+			MOV BX, AX
+			CALL SAIBIN
+			JMP MENUBIN
+			
+		;=============================================DIVISAO BINARIOS====================================================================================
+			
+		DIVISAO2:
+			LEA DX, MSGDIV
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV NUM, BX
+			;
+			MOV AH,2
+			MOV DL,'/'
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV NUM2, BX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR DX, DX 
+			IDIV BX
+			;
+			MOV BX, AX
+			CALL SAIBIN
+			; 
+			JMP MENUBIN
+			
+		;=============================================MULTIPLICACAO2 BINARIOS=============================================================================	
+		
+		MULTIPLICACAOM2:
+			LEA DX, MSGMM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV AX, BX
+			MOV CL, NUM5
+			SAL AX, CL
+			MOV BX, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			CALL SAIBIN
+			JMP MENUBIN
+			
+		;=============================================DIVISAO2 BINARIOS===================================================================================
+		
+		DIVISAOD2:	
+			LEA DX, MSGDD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTBIN
+			MOV AX, BX
+			MOV CL, NUM5
+			SAR AX, CL
+			MOV BX, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			CALL SAIBIN
+			JMP MENUBIN
+		
+		;=============================================AND BINARIOS========================================================================================
+		
+		AND2:
+			LEA DX, MSGAND
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGAND1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTBIN
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			AND BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIBIN
+			JMP MENUBIN
+		
+		;=============================================OR BINARIOS========================================================================================
+		
+		OR2:
+			LEA DX, MSGOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTBIN
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			OR BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIBIN
+			JMP MENUBIN
+		
+		;=============================================XOR BINARIOS========================================================================================
+		
+		XOR2:
+			LEA DX, MSGXOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGXOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTBIN
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIBIN
+			JMP MENUBIN
+		;
+		;=============================================NOT BINARIOS========================================================================================
+		NOT2:
+			LEA DX, MSGNOT
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTBIN
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGNOT1
+			MOV AH, 9h
+			INT 21H		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV BX, NUM
+			NOT BX	
+			;exibindo na tela o resultado
+			CALL SAIBIN
+			; 
+			JMP MENUBIN
+			;
+		JSAIDABIN:
+			LEA DX, MSGSAIDA
+			MOV AH, 9H
+			INT 21H
+			CALL ENTDEC
+			CMP AX, 1D
+			JZ MENUJMP1
+			CMP AX, 2D
+			JZ SAIRBIN			
+			MENUJMP1:
+			JMP MENU
+			;
+			;RETORNO AO DOS
+		SAIRBIN:
+			MOV AH,4CH ;funcao para saida
+			INT 21H ;saindo
+			
+		;=============================================EXIBICAO MENU HEXADECIMAL===============================================================================
+		
+			
+		MENUHEXA:
+			LEA DX, MSGEXPLICHEX
+			MOV AH, 9H
+			INT 21H
+			MOV AX,@DATA ;coloca o numero do segmento de dados em AX
+			MOV DS,AX    ;pois DS nao pode receber @DATA diretamente		
+		;SELECIONE UMA OPCAO 
+			LEA DX, MSG
+			MOV AH, 9H
+			INT 21H
+		;SOMA 
+			LEA DX,MSGS
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SUBTRACAO
+			LEA DX,MSGSU
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO
+			LEA DX,MSGM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO
+			LEA DX,MSGD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO POR 2
+			LEA DX,MSGDD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO POR 2
+			LEA DX,MSGMM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;AND
+			LEA DX,MSGA
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;OR
+			LEA DX,MSGO
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;XOR
+			LEA DX,MSGX
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;NOT
+			LEA DX,MSGN
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SAIR
+			LEA DX,MSGF
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+
+		;=============================================JUMPS PARA AS OPERACOES (HEXADECIMAIS)===================================================================
+		
+		CALL ENTDEC
+		;JUMP PARA SOMA
+			CMP AX, 1D
+			JZ JSOMAH
+		
+		;JUMP PARA SUB
+			CMP AX, 2D
+			JZ JSUBTRACAOH
+		
+		;JUMP PARA MULT
+			CMP AX, 3D	;compara se o caracter eh igual a 3
+			JZ JMULTIPLICACAOH;se for igual pula para a linha chamada multiplicacao
+		
+		;JUMP PARA DIV
+			CMP AX, 4D	;compara se o caracter eh igual a 4
+			JZ JDIVISAOH	;se for igual pula para a linha chamada divisao
+		
+		;JUMP PARA MULT2
+			CMP AX, 5D	;compara se o caracter eh igual a 5
+			JZ JMULTIPLICACAO2H;se for igual pula para a linha chamada multiplicacao3
+		
+		;JUMP PARA DIVISAO2
+			CMP AX, 6D;compara se o caracter eh igual a 6
+			JZ JDIVISAO2H;se for igual pula para a linha chamada divisao3
+		
+		;JUMP PARA AND1
+			CMP AX, 7D;compara se o caracter eh igual a 7
+			JZ  JANDH;se for igual pula para a linha chamada AND1
+		
+		;JUMP PARA OR1
+			CMP AX, 8D;compara se o caracter eh igual a 8
+			JZ JORH;se for igual pula para a linha chamada OR1
+		
+		;JUMP PARA XOR1
+			CMP AX, 9D;compara se o caracter eh igual a 9
+			JZ JXORH;se for igual pula para a linha chamada XOR1
+		
+		;JUMP PARA NOT1
+			CMP AX, 10D;compara se o caracter eh igual a 10
+			JZ JNOTH;se for igual pula para a linha chamada NOT1
+		
+		;JUMP PARA SAIR
+			CMP AX, 0D	;compara se o caracter eh igual a 0(48 na tabela ASCII)
+			JZ JSAIRH	;se for igual pula para a linha chamada sair
+		
+		;JXXX TEM EXCECAO DE ACORDO COM O NUMERO DE LINHAS		
+		
+		;PULAR PARA A INSTRUCAO SOMA
+		JSOMAH:
+			JMP SOMAH
+		;PULAR PARA A INSTRUCAO SUBTRAÇÃO
+		JSUBTRACAOH:
+			JMP SUBTRACAOH
+		
+		;PULAR PARA A INSTRUCAO MULTIPLICACAO
+		JMULTIPLICACAOH:
+			JMP MULTIPLICACAOH
+		
+		;PULAR PARA A INSTRUCAO DIVISAO
+		JDIVISAOH:
+			JMP DIVISAOH
+		
+		;PULAR PARA A INSTRUCAO MULTIPLICACAOPOR2
+		JMULTIPLICACAO2H:
+			JMP MULTIPLICACAO2H
+		
+		;PULAR PARA A INSTRUCAO DIVISAOPOR2
+		JDIVISAO2H:
+			JMP DIVISAO2H
+		
+		;PULAR PARA A INSTRUCAO ANDHEX
+		JANDH:
+			JMP ANDH
+		
+		;PULAR PARA A INSTRUCAO ORHEX
+		JORH:
+			JMP ORH
+		
+		;PULAR PARA A INSTRUCAO XORHEX
+		JXORH:
+			JMP XORH
+		
+		;PULAR PARA A INSTRUCAO NOTHEX
+		JNOTH:
+			JMP NOTH
+		;PULAR PARA A INSTRUCAO SAIR1
+		JSAIRH:
+			JMP JMPSAIDAHEX
+			
+		;=====================================================SOMA HEXADECIMAIS====================================================================================
+
+		SOMAH:
+			LEA DX, MSGSOMA
+			MOV AH, 9H
+			INT 21H
+		;1?NUM
+			CALL ENTHEX
+			MOV NUM,BX
+		;INSERIR +
+			MOV AH, 2H
+			MOV DL, '+'
+			INT 21H
+		;2?NUM
+			CALL ENTHEX
+			MOV NUM2, BX
+		;INSERIR =
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+		;FAZER SOMA E SUBTRAIR 48 P/ DECIMAL
+			MOV BX,NUM
+			ADD BX,NUM2
+			CALL SAIHEX
+		;EXIBINDO RESULTADO
+			JMP MENUHEXA			
+		
+		;=============================================SUBTRACAO HEXADECIMAIS==================================================================================
+		
+		SUBTRACAOH:
+			LEA DX, MSGSUB
+			MOV AH, 9H
+			INT 21H
+			CALL ENTHEX
+			MOV NUM, BX
+			MOV AH, 2
+			MOV DL, '-'
+			INT 21H
+			CALL ENTHEX
+			MOV NUM2, BX
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			MOV BX, NUM
+			SUB BX, NUM2
+			CALL SAIHEX
+			JMP MENUHEXA
+		
+		;=============================================MULTIPLICACAO HEXADECIMAIS==============================================================================
+		
+		MULTIPLICACAOH:
+			LEA DX, MSGMUL
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV NUM, BX
+			;
+			MOV AH,2
+			MOV DL,'*'
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV NUM2, BX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+
+			MOV AX, NUM
+			MOV BX, NUM2
+			MUL BX ;SEMPRE PEGA EM AL
+			;
+			MOV BX, AX
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+			
+		;=============================================DIVISAO HEXADECIMAIS====================================================================================
+			
+		DIVISAOH:
+			LEA DX, MSGDIV
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV NUM, BX
+			;
+			MOV AH,2
+			MOV DL,'/'
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV NUM2, BX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR DX, DX 
+			IDIV BX
+			;
+			MOV BX, AX
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		
+		;=============================================MULTIPLICACAO2 HEXADECIMAIS=============================================================================	
+		
+		MULTIPLICACAO2H:
+			LEA DX, MSGMM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV AX, BX
+			MOV CL, NUM5
+			SAL AX, CL
+			MOV BX, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		
+		;=============================================DIVISAO2 HEXADECIMAIS===================================================================================
+		
+		DIVISAO2H:	
+			LEA DX, MSGDD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTHEX
+			MOV AX, BX
+			MOV CL, NUM5
+			SAR AX, CL
+			MOV BX, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		
+		;=============================================AND HEXADECIMAIS========================================================================================
+		
+		ANDH:
+			LEA DX, MSGAND
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTHEX
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGAND1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTHEX
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			AND BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		
+		;=============================================OR HEXADECIMAIS========================================================================================
+		
+		ORH:
+			LEA DX, MSGOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTHEX
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTHEX
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			OR BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		
+		;=============================================XOR HEXADECIMAIS========================================================================================
+		
+		XORH:
+			LEA DX, MSGXOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTHEX
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGXOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTHEX
+			MOV NUM2, BX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR BX, AX	
+			;exibindo na tela o resultado
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+		;
+		;=============================================NOT HEXADECIMAIS========================================================================================
+		NOTH:
+			LEA DX, MSGNOT
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTHEX
+			MOV NUM, BX
+			;inserindo + na tela
+			LEA DX, MSGNOT1
+			MOV AH, 9h
+			INT 21H		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV BX, NUM
+			NOT BX	
+			;exibindo na tela o resultado
+			CALL SAIHEX
+			; 
+			JMP MENUHEXA
+			;
+		;==========================================SAIDA HEXADECIMAL=================================
+		JMPSAIDAHEX:
+			LEA DX, MSGSAIDA
+			MOV AH, 9H
+			INT 21H
+			CALL ENTDEC
+			CMP AX, 1D
+			JZ MENUJMPHEX
+			CMP AX, 2D
+			JZ SAIDAHEX
+			MENUJMPHEX:
+			JMP MENU
+		
+		
+		;RETORNO AO DOS
+		SAIDAHEX:
+			MOV AH,4CH ;funcao para saida
+			INT 21H ;saindo				
+			
+		;=============================================EXIBICAO MENU OCTAL===============================================================================
+		
+			
+		MENUOCT:
+			LEA DX, MSGEXPLICOCT
+			MOV AH, 9H
+			INT 21H				
+			MOV AX,@DATA ;coloca o numero do segmento de dados em AX
+			MOV DS,AX    ;pois DS nao pode receber @DATA diretamente
+		;SELECIONE UMA OPCAO 
+			LEA DX, MSG
+			MOV AH, 9H
+			INT 21H
+		;SOMA 
+			LEA DX,MSGS
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SUBTRACAO
+			LEA DX,MSGSU
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO
+			LEA DX,MSGM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO
+			LEA DX,MSGD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;DIVISAO POR 2
+			LEA DX,MSGDD
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;MULTIPLICACAO POR 2
+			LEA DX,MSGMM
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;AND
+			LEA DX,MSGA
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;OR
+			LEA DX,MSGO
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;XOR
+			LEA DX,MSGX
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;NOT
+			LEA DX,MSGN
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+		;SAIR
+			LEA DX,MSGF
+			MOV AH,9h 	;funcao para exibir caracter
+			INT 21H 	;exibir
+
+		;=============================================JUMPS PARA AS OPERACOES (HEXADECIMAIS)===================================================================
+		
+		CALL ENTDEC
+		;JUMP PARA SOMA
+			CMP AX, 1D
+			JZ JSOMA8
+		
+		;JUMP PARA SUB
+			CMP AX, 2D
+			JZ JSUBTRACAO8
+		
+		;JUMP PARA MULT
+			CMP AX, 3D	;compara se o caracter eh igual a 3
+			JZ JMULTIPLICACAO8;se for igual pula para a linha chamada multiplicacao
+		
+		;JUMP PARA DIV
+			CMP AX, 4D	;compara se o caracter eh igual a 4
+			JZ JDIVISAO8	;se for igual pula para a linha chamada divisao
+		
+		;JUMP PARA MULT2
+			CMP AX, 5D	;compara se o caracter eh igual a 5
+			JZ JMULTIPLICACAO28;se for igual pula para a linha chamada multiplicacao3
+		
+		;JUMP PARA DIVISAO2
+			CMP AX, 6D;compara se o caracter eh igual a 6
+			JZ JDIVISAO28;se for igual pula para a linha chamada divisao3
+		
+		;JUMP PARA AND1
+			CMP AX, 7D;compara se o caracter eh igual a 7
+			JZ  JAND8;se for igual pula para a linha chamada AND1
+		
+		;JUMP PARA OR1
+			CMP AX, 8D;compara se o caracter eh igual a 8
+			JZ JOR8;se for igual pula para a linha chamada OR1
+		
+		;JUMP PARA XOR1
+			CMP AX, 9D;compara se o caracter eh igual a 9
+			JZ JXOR8;se for igual pula para a linha chamada XOR1
+		
+		;JUMP PARA NOT1
+			CMP AX, 10D;compara se o caracter eh igual a 10
+			JZ JNOT8;se for igual pula para a linha chamada NOT1
+		
+		;JUMP PARA SAIR
+			CMP AX, 0D	;compara se o caracter eh igual a 0(48 na tabela ASCII)
+			JZ JSAIR8	;se for igual pula para a linha chamada sair
+		
+		;JXXX TEM EXCECAO DE ACORDO COM O NUMERO DE LINHAS		
+		
+		;PULAR PARA A INSTRUCAO SOMA
+		JSOMA8:
+			JMP SOMA8
+		;PULAR PARA A INSTRUCAO SUBTRAÇÃO
+		JSUBTRACAO8:
+			JMP SUBTRACAO8
+		
+		;PULAR PARA A INSTRUCAO MULTIPLICACAO
+		JMULTIPLICACAO8:
+			JMP MULTIPLICACAO8
+		
+		;PULAR PARA A INSTRUCAO DIVISAO
+		JDIVISAO8:
+			JMP DIVISAO8
+		
+		;PULAR PARA A INSTRUCAO MULTIPLICACAOPOR2
+		JMULTIPLICACAO28:
+			JMP MULTIPLICACAO28
+		
+		;PULAR PARA A INSTRUCAO DIVISAOPOR2
+		JDIVISAO28:
+			JMP DIVISAO28
+		
+		;PULAR PARA A INSTRUCAO ANDHEX
+		JAND8:
+			JMP AND8
+		
+		;PULAR PARA A INSTRUCAO ORHEX
+		JOR8:
+			JMP OR8
+		
+		;PULAR PARA A INSTRUCAO XORHEX
+		JXOR8:
+			JMP XOR8
+		
+		;PULAR PARA A INSTRUCAO NOTHEX
+		JNOT8:
+			JMP NOT8
+		;PULAR PARA A INSTRUCAO SAIR1
+		JSAIR8:
+			JMP JMPSAIDAOCT
+			
+		;=====================================================SOMA OCTAL====================================================================================
+
+		SOMA8:
+			LEA DX, MSGSOMA
+			MOV AH, 9H
+			INT 21H
+		;1?NUM
+			CALL ENTOCT
+			MOV NUM,AX
+		;INSERIR +
+			MOV AH, 2H
+			MOV DL, '+'
+			INT 21H
+		;2?NUM
+			CALL ENTOCT
+			MOV NUM2, AX
+		;INSERIR =
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+		;FAZER SOMA E SUBTRAIR 48 P/ DECIMAL
+			MOV AX,NUM
+			MOV BX,NUM2
+			ADD AX,BX
+			CALL SAIOCT
+		;EXIBINDO RESULTADO
+			JMP MENUOCT			
+		
+		;=============================================SUBTRACAO OCTAL==================================================================================
+		
+		SUBTRACAO8:
+			LEA DX, MSGSUB
+			MOV AH, 9H
+			INT 21H
+			CALL ENTOCT
+			MOV NUM, AX
+			;
+			MOV AH, 2
+			MOV DL, '-'
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM2, AX
+			
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			
+			MOV AX, NUM
+			MOV BX, NUM2
+			SUB AX, BX
+			CALL SAIOCT
+			JMP MENUOCT
+		
+		;=============================================MULTIPLICACAO OCTAL==============================================================================
+		
+		MULTIPLICACAO8:
+			LEA DX, MSGMUL
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM, AX
+			;
+			MOV AH,2
+			MOV DL,'*'
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM2, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			MUL BX ;SEMPRE PEGA EM AL
+			;
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+			
+		;=============================================DIVISAO OCTAL====================================================================================
+			
+		DIVISAO8:
+			LEA DX, MSGDIV
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM, AX
+			;
+			MOV AH,2
+			MOV DL,'/'
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM2, AX
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;			
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR DX, DX 
+			IDIV BX
+			;
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		
+		;=============================================MULTIPLICACAO2 OCTAL=============================================================================	
+		
+		MULTIPLICACAO28:
+			LEA DX, MSGMM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGM2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV CL, NUM5
+			SAL AX, CL
+			
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			XOR AH,AH
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		
+		;=============================================DIVISAO2 OCTAL===================================================================================
+		
+		DIVISAO28:	
+			LEA DX, MSGDD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTDEC
+			MOV NUM5, AL
+			;
+			LEA DX, MSGD2
+			MOV AH, 9h
+			INT 21H
+			;
+			CALL ENTOCT
+			MOV NUM, AX
+			MOV CL, NUM5
+			MOV AX, NUM
+			SAL AX, CL
+			;
+			LEA DX, MSGRESULTADO
+			MOV AH, 9h
+			INT 21H
+			XOR AH,AH
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		
+		;=============================================AND OCTAL========================================================================================
+		
+		AND8:
+			LEA DX, MSGAND
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTOCT
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGAND1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTOCT
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			AND AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		
+		;=============================================OR OCTAL========================================================================================
+		
+		OR8:
+			LEA DX, MSGOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTOCT
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTOCT
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			OR AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		
+		;=============================================XOR OCTAL========================================================================================
+		
+		XOR8:
+			LEA DX, MSGXOR
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTOCT
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGXOR1
+			MOV AH, 9h
+			INT 21H
+			;pegando o segundo numero
+			CALL ENTOCT
+			MOV NUM2, AX		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			MOV BX, NUM2
+			XOR AX, BX	
+			;exibindo na tela o resultado
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+		;
+		;=============================================NOT OCTAL========================================================================================
+		NOT8:
+			LEA DX, MSGNOT
+			MOV AH, 9h
+			INT 21H
+			;pegando o primeiro numero
+			CALL ENTOCT
+			MOV NUM, AX
+			;inserindo + na tela
+			LEA DX, MSGNOT1
+			MOV AH, 9h
+			INT 21H		
+			;inserindo = na tela
+			LEA DX, MSGRESULTADO
+			MOV AH, 9H
+			INT 21H
+			;
+			MOV AX, NUM
+			NOT AX	
+			;exibindo na tela o resultado
+			CALL SAIOCT
+			; 
+			JMP MENUOCT
+			;
+			
+		;=============================================saindo oct===============================================================================	
+		
+		JMPSAIDAOCT:
+			LEA DX, MSGSAIDA
+			MOV AH, 9H
+			INT 21H
+			CALL ENTDEC
+			CMP AX, 1D
+			; 
+			JZ MENUJMPOCT
+			CMP AX, 2D
+			JZ SAIDAOCTAL1
+			MENUJMPOCT:
+			JMP MENU
+		
+		
+		;RETORNO AO DOS
+		SAIDAOCTAL1:
+			MOV AH,4CH ;funcao para saida
+			INT 21H ;saindo					
+			
+			CALC ENDP
+			
+
+		
+		
+		;================================================FUNCAO PARA RECEBER NUMERO DECIMAL===============================================================
+				
+		ENTDEC PROC ;le um numero decimal da faixa de -32768 a +32767
+		;variaveis de entrada: nehuma (entrada de digitos pelo teclado)
+		;variaveis de saida: AX -> valor binario equivalente do numero decimal
+			PUSH BX
+			PUSH CX
+			PUSH DX ;salvando registradores que ser? usados
+			XOR BX,BX ;BX acumula o total, valor inicial 0
+			XOR CX,CX ;CX indicador de sinal (negativo = 1), inicial = 0
+			MOV AH,1h
+			INT 21h ;le caracter no AL
+			CMP AX, 45D ;sinal negativo?
+			JE MENOS
+			CMP AX, 43D ;sinal positivo?
+			JE MAIS
+			JMP NUM3 ;se nao ?sinal, ent? v?processar o caracter
+			MENOS: MOV CX,1 ;negativo = verdadeiro
+			MAIS: INT 21h ;le um outro caracter
+			NUM3: AND AX,000Fh ;junta AH a AL, converte caracter para bin?io
+			PUSH AX ;salva AX (valor bin?io) na pilha
+			MOV AX,10 ;prepara constante 10
+			MUL BX ;AX = 10 x total, total est?em BX
+			POP BX ;retira da pilha o valor salvo, vai para BX
+			ADD BX,AX ;total = total x 10 + valor bin?io
+			MOV AH,1h
+			INT 21h ;le um caracter
+			CMP AL,0Dh ;?o CR ?
+			JNE NUM3 ;se n?, vai processar outro d?ito em NUM
+			MOV AX,BX ;se ?CR, ent? coloca o total calculado em AX
+			CMP CX,1 ;o numero ?negativo?
+			JNE SAIDA ;n?
+			NEG AX ;sim, faz-se seu complemento de 2
+			SAIDA: POP DX
+			POP CX
+			POP BX ;restaura os conte?os originais
+			RET ;retorna a rotina que chamou
+		ENTDEC ENDP
+			
+		;==================================================FUNCAO PARA SAIR NUMERO DECIMAL================================================================
+		
+		SAIDEC PROC ;exibe o conteudo de AX como decimal inteiro com sinal
+		;variaveis de entrada: AX -> valor binario equivalente do n?ero decimal
+		;variaveis de saida: nehuma (exibição de d?itos direto no monitor de video)
+			PUSH AX
+			PUSH BX
+			PUSH CX
+			PUSH DX ;salva na pilha os registradores usados
+			OR AX,AX ;prepara comparação de sinal
+			JGE PT1 ;se AX maior ou igual a 0, vai para PT1
+			PUSH AX ;como AX menor que 0, salva o n?ero na pilha
+			MOV DX, 45D ;prepara o caracter ' - ' para sair
+			MOV AH,2h ;prepara exibição
+			INT 21h ;exibe ' - '
+			POP AX ;recupera o n?ero
+			NEG AX ;troca o sinal de AX (AX = - AX)
+		;obtendo d?itos decimais e salvando-os temporariamente na pilha
+			PT1: XOR CX,CX ;inicializa CX como contador de d?itos
+			MOV BX,10 ;BX possui o divisor
+			PT2: XOR DX,DX ;inicializa o byte alto do dividendo em 0; restante ?AX
+			DIV BX ;ap? a execução, AX = quociente; DX = resto
+			PUSH DX ;salva o primeiro d?ito decimal na pilha (1o. resto)
+			INC CX ;contador = contador + 1
+			OR AX,AX ;quociente = 0 ? (teste de parada)
+			JNE PT2 ;n?, continuamos a repetir o la?
+		;exibindo os d?itos decimais (restos) no monitor, na ordem inversa
+			MOV AH,2h ;sim, termina o processo, prepara exibição dos restos
+			PT3: POP DX ;recupera d?ito da pilha colocando-o em DL (DH = 0)
+			ADD DL,30h ;converte valor bin?io do d?ito para caracter ASCII
+			INT 21h ;exibe caracter
+			LOOP PT3 ;realiza o loop ate que CX = 0
+			POP DX ;restaura o conte?o dos registros
+			POP CX
+			POP BX
+			POP AX ;restaura os conte?os dos registradores
+			RET ;retorna ?rotina que chamou
+		SAIDEC ENDP
+		
+		;=======================================================FUNCAO PARA RECEBER NUMERO BINARIO========================================================
+		
+		ENTBIN PROC
+			MOV CX,16 ;inicializa contador de d?itos
+			MOV AH,1h ;função DOS para entrada pelo teclado
+			XOR BX,BX ;zera BX -> ter?o resultado
+			INT 21h ;entra, caracter est?no AL
+			;while
+			TOPOBE: CMP AL,0Dh ;?CR?
+			JE FIMBE ;se sim, termina o WHILE
+			AND AL,0Fh ;se n?, elimina 30h do caracter
+			;(poderia ser SUB AL,30h)
+			SHL BX,1 ;abre espa? para o novo d?ito
+			OR BL,AL ;insere o d?ito no LSB de BL
+			INT 21h ;entra novo caracter
+			LOOP TOPOBE ;controla o m?imo de 16 d?itos
+			;end_while
+			FIMBE:
+			RET
+		ENTBIN ENDP
+	
+		;========================================================FUNCAO PARA SAIR NUMERO BINARIO=========================================================
+			
+		SAIBIN PROC
+			MOV CX,16 ;inicializa contador de bits
+			MOV AH,02h ;prepara para exibir no monitor
+			;for 16 vezes do
+			PT4: ROL BX,1 ;desloca BX 1 casa ?esquerda
+			;if CF = 1
+			JNC PT5 ;salta se CF = 0
+			;then
+			MOV DL, 31h ;como CF = 1
+			INT 21h ;exibe na tela "1" = 31h
+			;else
+			JMP PULO
+			PT5: MOV DL, 30h ;como CF = 0
+			INT 21h ;exibe na tela "0" = 30h
+			;end_if
+			PULO: LOOP PT4 ;repete 16 vezes
+			;end_for
+			RET
+		SAIBIN ENDP
+		
+		;========================================================FUNCAO PARA RECEBER NUMERO HEXADECIMAL=========================================================
+			
+		ENTHEX PROC
+			XOR BX,BX 
+			MOV CL,4 
+			MOV AH,1h 
+			INT 21h 
+			
+			TOPO:CMP AL,0Dh 
+			JE FIMHEXA
+			CMP AL, 39h 
+			JG LETRA 
+			AND AL,0Fh
+			JMP DESLOC
+			LETRA:SUB AL,37h 
+			DESLOC:SHL BX,CL 
+			OR BL,AL 
+			INT 21h
+			JMP TOPO
+			FIMHEXA:RET
+		ENTHEX ENDP
+		
+		;========================================================FUNCAO PARA SAIR NUMERO HEXADECIMAL=========================================================
+		
+		SAIHEX PROC
+				MOV CH,4 
+				MOV CL,4 
+				MOV AH,2h 
+		TOPO1:	MOV DL,BH 
+				SHR DL,CL 
+				CMP DL, 0Ah 
+				JAE LETRA1
+				ADD DL,30h
+				JMP P1
+		LETRA1:	ADD DL,37h 
+		P1:		INT 21h 
+				ROL BX,CL 
+				DEC CH
+				JNZ TOPO1 
+				RET
+		SAIHEX ENDP
+		
+		;========================================================FUNCAO PARA RECEBER NUMERO OCTAL=========================================================
+		
+		ENTOCT PROC
+				PUSH 	BX
+				PUSH 	CX
+				PUSH 	DX
+				XOR 	BX,BX
+				XOR 	CX,CX
+				MOV 	AH,1h
+				INT 	21h
+				TOPOOCT:
+				AND AX,000Fh ;junta AH a AL, converte caracter para bin?io
+				PUSH 	AX
+				MOV	 	AX,8
+				MUL 	BX
+				POP 	BX
+				ADD 	BX,AX
+				MOV 	AH,1h
+				INT 	21h
+				CMP 	AL,0Dh;?o CR ?
+				JNE 	TOPOOCT
+				MOV 	AX,BX
+				CMP 	CX,1
+				JNE 	SAIDAOCTAL
+				NEG 	AX
+	SAIDAOCTAL:	POP 	DX
+				POP 	CX
+				POP 	BX
+				RET
+
+		ENTOCT ENDP
+		
+		;========================================================FUNCAO PARA SAIR NUMERO OCTAL=========================================================
+		
+		SAIOCT PROC
+				PUSH 	AX
+				PUSH 	BX
+				PUSH 	CX
+				PUSH 	DX
+				OR 		AX,AX
+				XOR 	CX,CX
+				MOV 	BX,8
+	PT1OCT: 	XOR 	DX,DX
+				DIV 	BX
+				PUSH 	DX
+				INC 	CX
+				OR 		AX,AX
+				JNE 	PT1OCT
+				MOV 	AH,2h
+	PT2OCT: 	POP 	DX
+				ADD 	DL,30h
+				INT 	21h
+				LOOP 	PT2OCT
+				POP 	DX
+				POP 	CX
+				POP 	BX
+				POP 	AX
+				RET
+		SAIOCT ENDP
+		
+		;=========================================================FECHANDO O PROGRAMA=====================================================================
+		
+		END CALC
+		
